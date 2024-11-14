@@ -1,10 +1,10 @@
-#include <stdio.h>
 #include <sys/user.h>
+#include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
 #include <signal.h>
 
-#include "injector/inject.h"
+#include "inject.h"
 #include "process/trace.h"
 
 
@@ -31,14 +31,13 @@ int main(int argc, char** argv) {
         
     attach(pid);
     
-    unsigned long long realreal;
-    if (addrspc_alloc(pid, 4096, &realreal) == -1) {
-        perror("alloc failed lol oopsie");
-        exit(1);
+    unsigned char path[] = "/home/watson/Documents/Projects/jection/demo_so/libjection.so";
+    
+    int status = inject_so(pid, path);
+    
+    if (status != 0) {
+        fprintf(stderr, "shared object injection failed");
     }
-
-    printf("addr: %llx", realreal); 
     
     detach(pid);
-
 }

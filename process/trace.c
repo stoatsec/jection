@@ -15,20 +15,20 @@
 void attach(pid_t pid) {
     if (ptrace(PTRACE_ATTACH, pid, NULL, NULL) == -1) {
         perror("Failed to attach to process");
-        exit(1);
+        exit(-1);
     }
     
     int status;
    	if(waitpid(pid, &status, WUNTRACED) != pid) {
 		perror("Failed to run waitpid(). Process was not ready to be traced");
-		exit(1);
+		exit(-1);
 	}
 }
 
 void detach(pid_t pid) {
     if (ptrace(PTRACE_DETACH, pid, NULL, NULL) == -1) {
         perror("Process failed to detach");
-        exit(1);
+        exit(-1);
     }
 }
 
@@ -42,7 +42,7 @@ void readmem(pid_t pid, unsigned long addr, unsigned char* data, size_t len) {
         data[index] = ptrace(PTRACE_PEEKDATA, pid, addr, NULL);    
         if (errno != 0) {
             perror("Failed to read target process memory");
-            exit(1);
+            exit(-1);
         }
         
         index++;
@@ -54,10 +54,11 @@ void continue_process(pid_t pid) {
    	if(ptrace(PTRACE_CONT, pid, NULL, NULL) == -1)
 	{
 		perror("Failed to continue target process");
-		exit(1);
+		exit(-1);
 	}
 }
 
+// I'll make this work with a word array later probably
 /* write memory from a buffer starting at a set address */
 void pokemem(pid_t pid, unsigned long addr, unsigned char* data, size_t len) {
     
@@ -67,7 +68,7 @@ void pokemem(pid_t pid, unsigned long addr, unsigned char* data, size_t len) {
         addr += sizeof(unsigned char);        
         if (ptrace(PTRACE_POKEDATA, pid, addr, data[index]) == -1) {
             perror("Failed to poke target process memory");
-            exit(1);
+            exit(-1);
         } // I'll make this work with a larger type for performance later
                 
         index++;
@@ -78,7 +79,7 @@ void pokemem(pid_t pid, unsigned long addr, unsigned char* data, size_t len) {
 void get_registers(pid_t pid, struct user_regs_struct* regs) {
     if (ptrace(PTRACE_GETREGS, pid, 0, regs) == -1) {
         perror("Failed to read target process registers");
-        exit(1);
+        exit(-1);
     }
 }
 
@@ -86,6 +87,6 @@ void get_registers(pid_t pid, struct user_regs_struct* regs) {
 void set_registers(pid_t pid, struct user_regs_struct* regs) {
     if (ptrace(PTRACE_SETREGS, pid, 0, regs) == -1) {
         perror("Failed to set target process registers");
-        exit(1);
+        exit(-1);
     }
 }
