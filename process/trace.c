@@ -60,12 +60,12 @@ void continue_process(pid_t pid) {
 
 // todo! use larger type to minimize the amount of required syscalls
 /* write memory from a buffer starting at a set address */
-void pokemem(pid_t pid, unsigned long addr, unsigned char* data, size_t len) {
+void pokemem(pid_t pid, unsigned long addr, char* data, size_t len) {
     
     int index = 0; 
     
     while (index < len) {
-        addr += sizeof(unsigned char);        
+        addr += sizeof(char);        
         if (ptrace(PTRACE_POKEDATA, pid, addr, data[index]) == -1) {
             perror("Failed to poke target process memory");
             exit(-1);

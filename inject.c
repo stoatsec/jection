@@ -8,6 +8,7 @@
 #include <dlfcn.h>
 #include <stdio.h>
 
+#include "libcsym.h"
 #include "process/parser.h"
 #include "process/trace.h"
 
@@ -100,7 +101,7 @@ int addrspc_dealloc(pid_t pid, size_t map_size, unsigned long long address) {
     return status;
 }
 
-/* injects a shared object specified by the char* path in the target process */
+/* injects a shared object specified by the char* path in the target process */// (will require an asbolute path for now)
 int inject_so(pid_t pid, char* path) {
     
     unsigned long long path_address;
@@ -110,7 +111,8 @@ int inject_so(pid_t pid, char* path) {
     
     // get the location of dlopen from where libc is loaded into memory
     MapEntry libc_entry = parse_libc_loc(pid);
-    unsigned long long offset = 589664; // need to change this dynamically fr fr
+    unsigned long long offset = parse_libc_sym("dlopen"); // locate the offset of the symbol "dlopen" in libc
+    // objdump -T /lib/libc.so.6 | grep dlopen
     
     // allocate a block of memory for the shared object path
     int path_alloc = addrspc_alloc(pid, pathsize, &path_address);
@@ -164,9 +166,5 @@ int inject_so(pid_t pid, char* path) {
     set_registers(pid, &backup_regs);
     pokemem(pid, stub_entry.start, backup_buf, sizeof(backup_buf));
     
-    return status;
-    
-    // todo!
-    // - get dlopen from .dynsym section in libc binary
-    
+    return status;    
 }
