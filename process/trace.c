@@ -58,7 +58,7 @@ void continue_process(pid_t pid) {
 	}
 }
 
-// I'll make this work with a word array later probably
+// todo! use larger type to minimize the amount of required syscalls
 /* write memory from a buffer starting at a set address */
 void pokemem(pid_t pid, unsigned long addr, unsigned char* data, size_t len) {
     
@@ -69,7 +69,7 @@ void pokemem(pid_t pid, unsigned long addr, unsigned char* data, size_t len) {
         if (ptrace(PTRACE_POKEDATA, pid, addr, data[index]) == -1) {
             perror("Failed to poke target process memory");
             exit(-1);
-        } // I'll make this work with a larger type for performance later
+        }
                 
         index++;
     }

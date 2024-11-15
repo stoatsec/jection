@@ -38,6 +38,6 @@ int main(int argc, char** argv) {
     if (status != 0) {
         fprintf(stderr, "shared object injection failed");
     }
-    
+            
     detach(pid);
 }
