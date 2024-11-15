@@ -10,7 +10,7 @@ Jection attaches to a running process, so the first argument supplied must be th
 
 **Flags**:
 
- - -l <libpath> -- injects a shared object into the running process. Libpath is the absolute path to the shared object file
+ - -l <libpath> -- injects a shared object into the running process where libpath is the absolute path to the shared object file
  - -p <address> <data> -- poke data to a specified memory address
  - -r <address> -- read memory from a specified memory address
  - -h -- displays the help dialogue
