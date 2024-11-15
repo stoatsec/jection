@@ -2,6 +2,18 @@
 
 An external process memory injector for x86_64 Linux written in C. Uses the ptrace syscall to handle running processes. Features include shared object injection as well as reading/writing memory to/from set locations in memory. 	
 
+## Installation
+
+As of right now, the only way to install jection is to compile it with make.
+
+```
+git clone https://github.com/stoatsec/jection.git
+cd jection
+
+make
+sudo mv build/jection /usr/bin/
+```
+
 ## Usage
 
 Jection attaches to a running process, so the first argument supplied must be the target PID. Jection must be run with root.
