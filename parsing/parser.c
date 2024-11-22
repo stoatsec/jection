@@ -36,7 +36,7 @@ MapEntry parse_rwx(pid_t pid, unsigned long buffer_len) { // buffer len will be 
 
 /* parses the /proc/<PID>/maps file to find the location of libc */
 MapEntry parse_libc_loc(pid_t pid) {
-    char filename[MAX_LINE_LENGTH] = "/proc/%i/maps";
+    char filename[MAX_LINE_LENGTH];
     sprintf(filename, "/proc/%i/maps", pid);
 
     FILE* file = fopen(filename, "r");

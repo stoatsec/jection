@@ -2,13 +2,14 @@ TARGET = jection
 BUILD_DIR = build
 
 CC = gcc
-CFLAGS = -g
+#CFLAGS = -g
 
 SRCS = \
-    process/parser.c \
+    parsing/parser.c \
     process/trace.c \
+    proxy/proxy.c \
+    utils.c \
     inject.c \
-    libcsym.c \
     jection.c
 
 OBJS = $(SRCS:.c=.o)

@@ -19,4 +19,4 @@ typedef struct {
 MapEntry parse_rwx(pid_t pid, unsigned long buffer_len);
 MapEntry parse_map_perms(const char* line);
 MapEntry parse_libc_loc(pid_t pid);
-int check_validity(MapEntry entry, unsigned long buffer_size);
+static int check_validity(MapEntry entry, unsigned long buffer_size);

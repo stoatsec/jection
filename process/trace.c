@@ -33,11 +33,10 @@ void detach(pid_t pid) {
 }
 
 /* read memory starting at a set address into a buffer */
-void readmem(pid_t pid, unsigned long addr, unsigned char* data, size_t len) {
+void readmem(pid_t pid, unsigned long long addr, unsigned long long* data, size_t len) {
     int index = 0; 
     
     while (index < len) {
-        addr += sizeof(unsigned char);        
         errno = 0;
         data[index] = ptrace(PTRACE_PEEKDATA, pid, addr, NULL);    
         if (errno != 0) {
@@ -45,6 +44,7 @@ void readmem(pid_t pid, unsigned long addr, unsigned char* data, size_t len) {
             exit(-1);
         }
         
+        addr += sizeof(unsigned long long);        
         index++;
     }
 }
@@ -58,22 +58,37 @@ void continue_process(pid_t pid) {
 	}
 }
 
-// todo! use larger type to minimize the amount of required syscalls
 /* write memory from a buffer starting at a set address */
-void pokemem(pid_t pid, unsigned long addr, char* data, size_t len) {
-    
+void pokemem(pid_t pid, unsigned long long addr, unsigned long long* data, size_t len) {
+        
     int index = 0; 
     
     while (index < len) {
-        addr += sizeof(char);        
         if (ptrace(PTRACE_POKEDATA, pid, addr, data[index]) == -1) {
             perror("Failed to poke target process memory");
             exit(-1);
         }
                 
+        addr += sizeof(unsigned long long);        
         index++;
     }
 }
+
+/* write chars to memory from a buffer starting at a set address */
+void pokemem_char(pid_t pid, unsigned long long addr, char* data, size_t len) {
+        
+    int index = 0; 
+    
+    while (index < len) {
+        if (ptrace(PTRACE_POKEDATA, pid, addr, data[index]) == -1) {
+            perror("Failed to poke target process memory");
+            exit(-1);
+        }
+                
+        addr += sizeof(char);        
+        index++;
+    }
+} 
 
 /* reads the attached process' registers into regs */
 void get_registers(pid_t pid, struct user_regs_struct* regs) {

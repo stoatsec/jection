@@ -69,10 +69,10 @@ int main(int argc, char** argv) {
             }
             
             unsigned long long address = strtoull(argv[i + 1], NULL, 16);
-            char data = strtoull(argv[i + 2], NULL, 16);
+            unsigned long long data = strtoull(argv[i + 2], NULL, 16);
             
             pokemem(pid, address, &data, 1);
-            printf("[+] Writing data 0x%hhx to address %llx\n", data, address);
+            printf("[+] Writing data 0x%llx to address %llx\n", data, address);
 
             i += 2;
         }
@@ -84,10 +84,10 @@ int main(int argc, char** argv) {
             }
             
             unsigned long long address = strtoull(argv[i + 1], NULL, 16);
-            unsigned char data;
+            unsigned long long data;
             
             readmem(pid, address, &data, 1);
-            printf("[+] Data at address %llx: 0x%hhx\n", address, data);
+            printf("[+] Data at address %llx: 0x%llx\n", address, data);
 
             i++;
         }
@@ -97,8 +97,3 @@ int main(int argc, char** argv) {
         
     return 0;
 }
-
-// todo!
-// - set registers from cli
-// - one-off shellcode injection
-// - shared object removal
