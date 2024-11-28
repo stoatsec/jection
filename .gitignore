@@ -2,4 +2,6 @@
 *.so
 *.o
 
+.clang-format
+
 build

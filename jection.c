@@ -1,99 +1,145 @@
-#include <sys/user.h>
-#include <string.h>
-#include <unistd.h>
-#include <stdlib.h>
+#include <getopt.h>
 #include <signal.h>
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <sys/user.h>
+#include <unistd.h>
 
+#include "colors.h"
 #include "inject.h"
 #include "process/trace.h"
+#include "proxy/proxy.h"
 
+static void print_help() {
+    printf("USAGE: jection <PID> [FLAGS]\n\n");
+    printf("FLAGS:\n");
+    printf(
+        "-l <libpath> ─  injects a library from an absolute path into the target PID\n"
+    );
+    printf("-r <address> ─  reads memory from the specified address\n");
+    printf("-p <address> <data> ─  writes data to specified address\n");
+    printf("-h ─  displays this dialogue\n");
+    printf(
+        "-i ─  intercept send and send_to syscalls and print the transmitted data\n"
+    );
+    printf(
+        " └─  -c ─  compare each data buffer with the previous one to highlight matching bytes\n"
+    );
+}
 
 int main(int argc, char** argv) {
-   	if(argc < 2) {
+    if (argc < 2) {
         printf("Usage: %s <PID> [FLAGS]", argv[0]);
-		return 1;
-	}
-    
-    char *endptr;
-    pid_t pid = (pid_t)strtol(argv[1], &endptr, 10);
-        
-    if (endptr == argv[1]) {
-        perror("Error: Invalid PID\n");
         return 1;
     }
-    
+
+    char* endptr;
+    pid_t pid = (pid_t)strtol(argv[1], &endptr, 10);
+
+    if (endptr == argv[1]) {
+        fprintf(stderr, "Error: Invalid PID\n");
+        return 1;
+    }
+
     // check if pid is currently running
-        
+
     if (kill(pid, 0) != 0) {
         printf("Process with PID %ld is not running\n", (long)pid);
         exit(1);
     }
-    
+
     attach(pid);
-    
-    for (int i = 2; i < argc; i++) {  
-        
-        if (strcmp(argv[i], "-h") == 0) {
-            printf("USAGE: jection <PID> [FLAGS]\n\n");
-            printf("FLAGS:\n");
-            printf("-l <libpath> -- injects a library from an absolute path into the target PID\n");
-            printf("-r <address> -- reads memory from the specified address\n");
-            printf("-p <address> <data> -- writes data to specified address\n");
-            printf("-h -- displays this dialogue\n");
-        }
-        
-        else if (strcmp(argv[i], "-l") == 0) {      
-            
-            char* libpath;
-            if (i + 1 != argc) {
-                libpath = argv[i + 1]; 
-            } else {
-                printf("Error: -l flag requires one argument (libpath)\n");
-                return 1;
-            }
-            
-            int status = inject_so(pid, libpath);
 
-            if (status != 0) {
-                return 1;
-            }
-            
-            i++;
-        }
-        
-        else if (strcmp(argv[i], "-p") == 0) {
-            if (i + 2 >= argc) {
-                printf("Error: -p flag requires two arguments (address and data)\n");
-                return 1;
-            }
-            
-            unsigned long long address = strtoull(argv[i + 1], NULL, 16);
-            unsigned long long data = strtoull(argv[i + 2], NULL, 16);
-            
-            pokemem(pid, address, &data, 1);
-            printf("[+] Writing data 0x%llx to address %llx\n", data, address);
+    static struct option long_options[] = {
+        {"library", required_argument, NULL, 'l'},
+        {"poke", required_argument, NULL, 'p'},
+        {"read", required_argument, NULL, 'r'},
+        {"intercept", no_argument, NULL, 'i'},
+        {"compare", no_argument, NULL, 'c'},
+        {"help", no_argument, NULL, 'h'},
+        {NULL, 0, NULL, 0}
+    };
 
-            i += 2;
-        }
-        
-        else if (strcmp(argv[i], "-r") == 0) {
-            if (i + 1 >= argc) {
-                printf("Error: -r flag requires one argument (address)\n");
-                return 1;
-            }
-            
-            unsigned long long address = strtoull(argv[i + 1], NULL, 16);
-            unsigned long long data;
-            
-            readmem(pid, address, &data, 1);
-            printf("[+] Data at address %llx: 0x%llx\n", address, data);
+    int compare = 0;
+    int intercept = 0;
+    int status = 0;
+    char* libpath;
+    uint64_t addr;
+    uint64_t data;
 
-            i++;
+    int c;
+    while ((c = getopt_long(argc, argv, "hcir:p:l:", long_options, NULL)) != -1
+    ) {
+        switch (c) {
+            case 'i':
+                intercept = 1;
+                break;
+            case 'c':
+                compare = 1;
+                break;
+            case 'l':
+
+                status = inject_so(pid, optarg);
+
+                if (status != 0) {
+                    return -1;
+                }
+
+                return 0;
+            case 'p':
+
+                if (optind + 1 != argc) {
+                    fprintf(
+                        stderr,
+                        RED "Option 'poke' requires two arguments\n\n" RESET
+                    );
+                    print_help();
+                    return -1;
+                }
+
+                addr = strtoull(optarg, NULL, 16);
+                optarg = argv[optind++];
+                data = strtoull(optarg, NULL, 16);
+
+                pokemem_ul(pid, addr, &data, 1);
+                printf(
+                    "[%s] Writing data 0x%lx to address %lx\n",
+                    GREEN "+" RESET,
+                    data,
+                    addr
+                );
+
+                return 0;
+            case 'r':
+                addr = strtoull(optarg, NULL, 16);
+
+                readmem_ul(pid, addr, &data, 1);
+                printf(
+                    "[%s] Data at address %lx: 0x%lx\n",
+                    GREEN "+" RESET,
+                    addr,
+                    data
+                );
+
+                return 0;
+            case 'h':
+                print_help();
+                return 0;
+
+            default:
+                return 1;
         }
     }
-    
+
+    if (intercept == 1) {
+        proxy_loop(pid, compare);
+    } else {
+        fprintf(stderr, RED "No valid arguments provided\n\n" RESET);
+        print_help();
+    }
+
     detach(pid);
-        
+
     return 0;
 }
